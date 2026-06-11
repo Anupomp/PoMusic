@@ -63,8 +63,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     if (!audio) return;
     setLoading(true);
     try {
-      const res = await api<{ url: string }>(`/api/stream?videoId=${track.id}`);
-      audio.src = res.url;
+      audio.src = `/api/audio?videoId=${track.id}`;
       await audio.play();
       setPlaying(true);
       // Record history (fire and forget; ignored if it fails)

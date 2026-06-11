@@ -82,6 +82,28 @@ Type a song name, press enter, click ▶ to play now or ＋ to add to the queue.
 
 One note: guests' browsers may block autoplay until they've interacted with the page once (a browser policy, not a bug). A click anywhere unblocks it.
 
+## Sharing a live link (listen together with friends)
+
+The app runs on your PC and gets exposed through a free Cloudflare quick tunnel — no deployment needed. (Cloud hosting doesn't work well for this anyway: YouTube flags datacenter IPs and yt-dlp starts hitting bot checks, while a home IP streams fine.)
+
+1. **Start the production build** (everything on one port):
+
+   ```bash
+   docker compose up --build
+   ```
+
+2. **Start the tunnel** in a second terminal. Either install cloudflared (`winget install Cloudflare.cloudflared` in PowerShell, then reopen the terminal), or just download `cloudflared-windows-amd64.exe` from the [cloudflared releases page](https://github.com/cloudflare/cloudflared/releases/latest) and run it directly:
+
+   ```bash
+   cloudflared tunnel --url http://localhost:3000
+   ```
+
+3. It prints a URL like `https://random-words.trycloudflare.com` — send that to your friends. The link stays alive as long as the cloudflared window is open, and changes each restart.
+
+4. Friends open the link, register an account, click **Listen together → join with a code**, and enter your room code. You control playback as host; they hear everything in sync.
+
+Heads up for guests: browsers block autoplay until the page has been clicked once, so if audio doesn't start on their end, a single click anywhere fixes it.
+
 ## API overview
 
 ```
@@ -89,7 +111,8 @@ POST /auth/register            { email, password } → { token, email }
 POST /auth/login               { email, password } → { token, email }
 
 GET  /api/search?q=...         text search (cached)
-GET  /api/stream?videoId=...   audio stream URL + metadata (cached 1h)
+GET  /api/audio?videoId=...    audio bytes, proxied server-side (what the player uses)
+GET  /api/stream?videoId=...   raw stream URL + metadata (cached 1h)
 GET  /api/meta?videoId=...     metadata only
 GET  /api/playlist?url=...     import a YouTube playlist/radio URL
 GET  /api/lyrics?artist=&track=
