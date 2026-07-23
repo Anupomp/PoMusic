@@ -14,7 +14,6 @@ export default function PlaylistSidebar() {
   const refresh = useCallback(() => {
     api<Playlist[]>('/api/playlists').then(setPlaylists).catch((e) => setError(e.message));
   }, []);
-
   useEffect(refresh, [refresh]);
 
   async function create() {
@@ -22,23 +21,19 @@ export default function PlaylistSidebar() {
     if (!name) return;
     try {
       await api('/api/playlists', { method: 'POST', body: JSON.stringify({ name }) });
-      setNewName('');
-      refresh();
+      setNewName(''); refresh();
     } catch (e) { setError((e as Error).message); }
   }
 
   async function open(id: number) {
     if (openId === id) { setOpenId(null); return; }
     const data = await api<{ songs: PlaylistSong[] }>(`/api/playlists/${id}`);
-    setSongs(data.songs);
-    setOpenId(id);
+    setSongs(data.songs); setOpenId(id);
   }
 
   function toTrack(s: PlaylistSong): Track {
     return {
-      id: s.video_id,
-      title: s.title,
-      channel: '',
+      id: s.video_id, title: s.title, channel: '',
       duration: s.duration_sec,
       thumb: s.thumbnail_url || `https://i.ytimg.com/vi/${s.video_id}/mqdefault.jpg`,
     };
@@ -47,7 +42,6 @@ export default function PlaylistSidebar() {
   function playAll() {
     if (!songs.length) return;
     setQueue(songs.map(toTrack));
-    // setQueue is async via state; play first track on next tick
     setTimeout(() => playIndex(0), 0);
   }
 
@@ -66,40 +60,46 @@ export default function PlaylistSidebar() {
   }
 
   return (
-    <div className="playlists">
-      <div className="pl-create">
+    <div>
+      <div className="flex gap-2 mb-4">
         <input
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && create()}
-          placeholder="New playlist name"
-          aria-label="New playlist name"
+          placeholder="NEW PLAYLIST NAME"
+          className="brut-input flex-1 placeholder:font-display placeholder:text-sm"
         />
-        <button onClick={create}>Create</button>
+        <button onClick={create} className="brut-btn">Create</button>
       </div>
-      {error && <div className="search-error">{error}</div>}
-      {!playlists.length && <p className="muted pl-empty">No playlists yet. Create one above, then save the current song to it from the player bar.</p>}
-      {playlists.map((pl) => (
-        <div key={pl.id} className="pl-item">
-          <div className="pl-header" onClick={() => open(pl.id)}>
-            <span className="pl-name">{pl.name}</span>
-            <span className="pl-count">{pl.song_count} song{pl.song_count === 1 ? '' : 's'}</span>
-            <button className="delete-btn" onClick={(e) => { e.stopPropagation(); removePlaylist(pl.id); }} aria-label={`Delete ${pl.name}`}>✕</button>
-          </div>
-          {openId === pl.id && (
-            <div className="pl-songs">
-              {songs.length > 0 && <button className="pl-playall" onClick={playAll}>▶ Play all</button>}
-              {!songs.length && <p className="muted">This playlist is empty.</p>}
-              {songs.map((s) => (
-                <div key={s.id} className="pl-song">
-                  <span className="pl-song-title">{s.title}</span>
-                  <button className="delete-btn" onClick={() => removeSong(s.id)} aria-label={`Remove ${s.title}`}>✕</button>
-                </div>
-              ))}
+      {error && <div className="text-coral text-sm font-medium mb-2">{error}</div>}
+      {!playlists.length && (
+        <p className="text-smoke text-sm text-center py-8 border-2 border-dashed border-ink">
+          No playlists yet. Create one above, then save songs from the player bar.
+        </p>
+      )}
+      <div className="flex flex-col gap-2">
+        {playlists.map((pl) => (
+          <div key={pl.id} className="border-2 border-ink bg-paper">
+            <div className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-cream" onClick={() => open(pl.id)}>
+              <span className="font-display font-bold uppercase flex-1 truncate">{pl.name}</span>
+              <span className="text-xs text-smoke">{pl.song_count} song{pl.song_count === 1 ? '' : 's'}</span>
+              <button className="icon-square w-7 h-7 hover:bg-coral hover:text-paper" onClick={(e) => { e.stopPropagation(); removePlaylist(pl.id); }} aria-label={`Delete ${pl.name}`}>✕</button>
             </div>
-          )}
-        </div>
-      ))}
+            {openId === pl.id && (
+              <div className="border-t-2 border-ink px-3 py-2.5">
+                {songs.length > 0 && <button className="brut-btn-sm mb-2" onClick={playAll}>▶ Play all</button>}
+                {!songs.length && <p className="text-smoke text-sm">Empty playlist.</p>}
+                {songs.map((s) => (
+                  <div key={s.id} className="flex items-center gap-2 py-1.5">
+                    <span className="flex-1 text-sm truncate">{s.title}</span>
+                    <button className="icon-square w-6 h-6 hover:bg-coral hover:text-paper" onClick={() => removeSong(s.id)} aria-label={`Remove ${s.title}`}>✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

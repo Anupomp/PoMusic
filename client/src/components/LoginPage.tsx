@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion } from 'motion/react';
 import { useAuth } from '../auth';
 
 export default function LoginPage() {
@@ -23,39 +24,55 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="login-page">
-      <div className="login-card">
-        <h1 className="logo">Po<span>Music</span></h1>
-        <p className="login-tag">Search it. Queue it. Listen together.</p>
+    <div className="min-h-screen flex items-center justify-center bg-cream p-5">
+      <motion.div
+        initial={{ opacity: 0, y: 24, rotate: -1 }}
+        animate={{ opacity: 1, y: 0, rotate: 0 }}
+        transition={{ type: 'spring', stiffness: 220, damping: 20 }}
+        className="w-full max-w-[400px] bg-paper brut-border shadow-brut-lg p-8"
+      >
+        <h1 className="font-display font-bold text-4xl uppercase tracking-tighter mb-1">
+          Po<span className="bg-lime px-1">Music</span>
+        </h1>
+        <p className="text-smoke text-sm mb-6 font-medium">Search it. Queue it. Listen together.</p>
 
-        <label>
-          Email
+        <label className="block mb-4">
+          <span className="brut-label text-xs block mb-1.5">Email</span>
           <input
             type="email" value={email} autoComplete="email"
+            className="brut-input w-full"
             onChange={(e) => setEmail(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && submit()}
           />
         </label>
-        <label>
-          Password
+        <label className="block mb-2">
+          <span className="brut-label text-xs block mb-1.5">Password</span>
           <input
             type="password" value={password}
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+            className="brut-input w-full"
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && submit()}
           />
         </label>
-        {mode === 'register' && <p className="muted hint">At least 8 characters.</p>}
-        {error && <div className="search-error">{error}</div>}
+        {mode === 'register' && <p className="text-smoke text-xs mb-2">At least 8 characters.</p>}
+        {error && (
+          <div className="bg-coral text-paper border-2 border-ink px-3 py-2 text-sm font-medium mb-3">
+            {error}
+          </div>
+        )}
 
-        <button className="primary-btn" onClick={submit} disabled={busy || !email || !password}>
+        <button className="brut-btn w-full mt-3 mb-3" onClick={submit} disabled={busy || !email || !password}>
           {busy ? 'One moment…' : mode === 'login' ? 'Log in' : 'Create account'}
         </button>
 
-        <button className="link-btn" onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}>
+        <button
+          className="w-full text-center text-sm text-ink font-medium underline underline-offset-2 hover:text-coral"
+          onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}
+        >
           {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Log in'}
         </button>
-      </div>
+      </motion.div>
     </div>
   );
 }

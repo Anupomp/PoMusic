@@ -1,21 +1,10 @@
 // JWT lives in module memory only — never localStorage.
-// A page refresh logs you out by design; the token is unreachable by XSS-injected
-// scripts scanning storage.
-
 let token: string | null = null;
 let onUnauthorized: (() => void) | null = null;
 
-export function setToken(t: string | null): void {
-  token = t;
-}
-
-export function getToken(): string | null {
-  return token;
-}
-
-export function setUnauthorizedHandler(fn: () => void): void {
-  onUnauthorized = fn;
-}
+export function setToken(t: string | null): void { token = t; }
+export function getToken(): string | null { return token; }
+export function setUnauthorizedHandler(fn: () => void): void { onUnauthorized = fn; }
 
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = {

@@ -20,7 +20,6 @@ export default function Player({ onSaveToPlaylist }: { onSaveToPlaylist: () => v
     };
   }, [audioRef]);
 
-  // Keyboard shortcuts: space = play/pause, ←/→ = seek 5s, n/p = next/prev
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
@@ -41,53 +40,54 @@ export default function Player({ onSaveToPlaylist }: { onSaveToPlaylist: () => v
   const pct = duration ? (time / duration) * 100 : 0;
 
   return (
-    <div className="player-bar">
-      <div className="player-now">
+    <div className="grid grid-cols-1 md:grid-cols-[1fr_1.2fr_1fr] items-center gap-5 px-6 py-3 bg-paper border-t-[3px] border-ink">
+      <div className="flex items-center gap-3 min-w-0">
         {currentTrack ? (
           <>
-            <div className="cover-wrap">
-              <img src={currentTrack.thumb} alt="" className="cover" />
-              <img src={currentTrack.thumb} alt="" className="cover-glow" aria-hidden />
+            <img src={currentTrack.thumb} alt="" className="w-14 h-14 object-cover border-2 border-ink shadow-brut-sm shrink-0" />
+            <div className="min-w-0">
+              <div className="text-sm font-bold truncate" title={currentTrack.title}>{currentTrack.title}</div>
+              <div className="text-xs text-smoke">{currentTrack.channel}</div>
             </div>
-            <div className="now-info">
-              <div className="now-title" title={currentTrack.title}>{currentTrack.title}</div>
-              <div className="now-channel">{currentTrack.channel}</div>
-            </div>
-            <button className="icon-btn save-btn" onClick={onSaveToPlaylist} title="Save to playlist">＋</button>
+            <button className="icon-square w-8 h-8 bg-lime shrink-0" onClick={onSaveToPlaylist} title="Save to playlist">＋</button>
           </>
         ) : (
-          <div className="now-info muted">Nothing playing</div>
+          <div className="text-smoke text-sm font-display uppercase">Nothing playing</div>
         )}
       </div>
 
-      <div className="player-controls">
-        <div className="control-row">
-          <button className="icon-btn" onClick={prev} disabled={isGuest} aria-label="Previous">⏮</button>
-          <button className="play-btn" onClick={togglePlay} disabled={isGuest || !currentTrack} aria-label={playing ? 'Pause' : 'Play'}>
+      <div className="flex flex-col gap-1.5">
+        <div className="flex justify-center items-center gap-4">
+          <button className="icon-square w-9 h-9 disabled:opacity-40" onClick={prev} disabled={isGuest} aria-label="Previous">⏮</button>
+          <button
+            className="icon-square w-12 h-12 bg-lime shadow-brut-sm disabled:opacity-40 text-lg"
+            onClick={togglePlay} disabled={isGuest || !currentTrack}
+            aria-label={playing ? 'Pause' : 'Play'}
+          >
             {loading ? '…' : playing ? '⏸' : '▶'}
           </button>
-          <button className="icon-btn" onClick={next} disabled={isGuest} aria-label="Next">⏭</button>
+          <button className="icon-square w-9 h-9 disabled:opacity-40" onClick={next} disabled={isGuest} aria-label="Next">⏭</button>
         </div>
-        <div className="progress-row">
-          <span className="time">{formatDuration(time)}</span>
+        <div className="flex items-center gap-2.5">
+          <span className="text-[11px] text-smoke tabular-nums w-9">{formatDuration(time)}</span>
           <input
-            type="range"
-            min={0}
-            max={duration || 0}
-            value={time}
-            step={1}
+            type="range" min={0} max={duration || 0} value={time} step={1}
             disabled={isGuest || !currentTrack}
             onChange={(e) => seek(Number(e.target.value))}
-            className="progress"
+            className="brut-range flex-1"
             style={{ ['--pct' as string]: `${pct}%` }}
             aria-label="Seek"
           />
-          <span className="time">{formatDuration(duration)}</span>
+          <span className="text-[11px] text-smoke tabular-nums w-9">{formatDuration(duration)}</span>
         </div>
       </div>
 
-      <div className="player-extra">
-        {isGuest && <span className="guest-badge">Listening with host</span>}
+      <div className="flex items-center justify-end gap-4">
+        {isGuest && (
+          <span className="font-display font-bold uppercase text-xs bg-coral text-paper border-2 border-ink px-2 py-1">
+            Guest
+          </span>
+        )}
         <VolumeControl />
       </div>
     </div>
@@ -97,15 +97,15 @@ export default function Player({ onSaveToPlaylist }: { onSaveToPlaylist: () => v
 function VolumeControl() {
   const { audioRef } = usePlayer();
   const [vol, setVol] = useState(1);
-  useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = vol;
-  }, [vol, audioRef]);
+  useEffect(() => { if (audioRef.current) audioRef.current.volume = vol; }, [vol, audioRef]);
   return (
-    <div className="volume">
+    <div className="flex items-center gap-2">
       <span aria-hidden>🔊</span>
       <input
         type="range" min={0} max={1} step={0.02} value={vol}
         onChange={(e) => setVol(Number(e.target.value))}
+        className="brut-range w-[90px]"
+        style={{ ['--pct' as string]: `${vol * 100}%` }}
         aria-label="Volume"
       />
     </div>

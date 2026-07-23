@@ -15,7 +15,6 @@ function parseSynced(synced: string): LyricLine[] {
     .filter((x): x is LyricLine => x !== null && x.text.length > 0);
 }
 
-/** Guess artist/track from a YouTube title like "Artist - Track (Official Video)". */
 function splitTitle(title: string, channel: string): { artist: string; track: string } {
   const clean = title.replace(/[\(\[][^)\]]*[\)\]]/g, '').trim();
   const parts = clean.split(/\s[-–—|]\s/);
@@ -47,7 +46,6 @@ export default function LyricsPanel() {
       .catch(() => setStatus('none'));
   }, [currentTrack]);
 
-  // Track active synced line
   useEffect(() => {
     if (!synced?.length) return;
     const audio = audioRef.current;
@@ -56,8 +54,7 @@ export default function LyricsPanel() {
       const t = audio.currentTime;
       let idx = -1;
       for (let i = 0; i < synced.length; i++) {
-        if (synced[i].t <= t) idx = i;
-        else break;
+        if (synced[i].t <= t) idx = i; else break;
       }
       setActiveLine(idx);
     };
@@ -65,7 +62,6 @@ export default function LyricsPanel() {
     return () => audio.removeEventListener('timeupdate', onTime);
   }, [synced, audioRef]);
 
-  // Auto-scroll active line into view
   useEffect(() => {
     if (activeLine < 0 || !listRef.current) return;
     const el = listRef.current.children[activeLine] as HTMLElement | undefined;
@@ -74,17 +70,20 @@ export default function LyricsPanel() {
 
   const plainLines = useMemo(() => plain?.split('\n') ?? [], [plain]);
 
-  if (!currentTrack) return <div className="lyrics-panel muted">Play a song to see lyrics.</div>;
-  if (status === 'loading') return <div className="lyrics-panel muted">Finding lyrics…</div>;
-  if (status === 'none') return <div className="lyrics-panel muted">No lyrics found for this track.</div>;
+  const wrap = 'h-full overflow-y-auto p-7';
+  if (!currentTrack) return <div className={`${wrap} text-smoke font-display uppercase text-sm`}>Play a song to see lyrics.</div>;
+  if (status === 'loading') return <div className={`${wrap} text-smoke font-display uppercase text-sm`}>Finding lyrics…</div>;
+  if (status === 'none') return <div className={`${wrap} text-smoke font-display uppercase text-sm`}>No lyrics found.</div>;
 
   return (
-    <div className="lyrics-panel" ref={listRef}>
+    <div className={wrap} ref={listRef}>
       {synced?.length
         ? synced.map((line, i) => (
-            <p key={i} className={`lyric-line ${i === activeLine ? 'active' : ''}`}>{line.text}</p>
+            <p key={i} className={`text-base leading-loose transition-colors ${i === activeLine ? 'text-ink font-bold bg-lime inline-block px-1' : 'text-smoke'}`}>
+              {line.text}
+            </p>
           ))
-        : plainLines.map((line, i) => <p key={i} className="lyric-line">{line || '\u00A0'}</p>)}
+        : plainLines.map((line, i) => <p key={i} className="text-base leading-loose text-ink">{line || '\u00A0'}</p>)}
     </div>
   );
 }

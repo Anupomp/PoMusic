@@ -1,5 +1,5 @@
 export interface Track {
-  id: string;          // YouTube video ID
+  id: string;
   title: string;
   channel: string;
   duration: number | null;

@@ -42,7 +42,6 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [room, setRoom] = useState<RoomInfo | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Refs mirror state for use inside socket handlers without stale closures
   const queueRef = useRef(queue);
   const indexRef = useRef(currentIndex);
   const roomRef = useRef(room);
@@ -63,10 +62,11 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     if (!audio) return;
     setLoading(true);
     try {
+      // Server-side audio proxy — googlevideo URLs are client/IP-bound so the
+      // browser can't fetch them directly. The server pipes the bytes.
       audio.src = `/api/audio?videoId=${track.id}`;
       await audio.play();
       setPlaying(true);
-      // Record history (fire and forget; ignored if it fails)
       api('/api/history', {
         method: 'POST',
         body: JSON.stringify({ video_id: track.id, title: track.title }),
@@ -82,7 +82,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const playIndex = useCallback((index: number, fromSync = false) => {
     const q = queueRef.current;
     if (index < 0 || index >= q.length) return;
-    if (isGuest && !fromSync) return; // guests don't control playback
+    if (isGuest && !fromSync) return;
     setCurrentIndex(index);
     loadAndPlay(q[index]);
     if (!fromSync) emitQueueSync(q, index);
@@ -111,7 +111,6 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       const next = prev.filter((_, i) => i !== index);
       let idx = indexRef.current;
       if (index < idx) idx -= 1;
-      else if (index === idx) { /* keep idx; next track now occupies it */ }
       if (idx >= next.length) idx = next.length - 1;
       setCurrentIndex(idx);
       emitQueueSync(next, idx);
@@ -134,28 +133,19 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     });
   }, [emitQueueSync]);
 
-  const next = useCallback(() => {
-    playIndex(indexRef.current + 1);
-  }, [playIndex]);
+  const next = useCallback(() => { playIndex(indexRef.current + 1); }, [playIndex]);
 
   const prev = useCallback(() => {
     const audio = audioRef.current;
-    if (audio && audio.currentTime > 3) {
-      audio.currentTime = 0;
-      return;
-    }
+    if (audio && audio.currentTime > 3) { audio.currentTime = 0; return; }
     playIndex(indexRef.current - 1);
   }, [playIndex]);
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
     if (!audio || isGuest) return;
-    if (audio.paused) {
-      audio.play().then(() => setPlaying(true)).catch(() => {});
-    } else {
-      audio.pause();
-      setPlaying(false);
-    }
+    if (audio.paused) audio.play().then(() => setPlaying(true)).catch(() => {});
+    else { audio.pause(); setPlaying(false); }
     const r = roomRef.current;
     if (r?.isHost) {
       getSocket().emit('play-pause', {
@@ -174,7 +164,6 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     if (r?.isHost) getSocket().emit('seek', { position: sec });
   }, [isGuest]);
 
-  // Auto-advance at end of track
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -187,7 +176,6 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     return () => audio.removeEventListener('ended', onEnded);
   }, [playIndex]);
 
-  // ── Listen together ────────────────────────────────────────
   const createRoom = useCallback(async (): Promise<string> => {
     const res = await api<{ code: string }>('/api/rooms/create', {
       method: 'POST',
@@ -221,7 +209,6 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     setRoom(null);
   }, []);
 
-  // Guest-side sync handlers
   useEffect(() => {
     if (!room || room.isHost) return;
     const socket = getSocket();

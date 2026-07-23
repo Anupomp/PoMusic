@@ -13,9 +13,9 @@ export default function Queue() {
 
   if (!queue.length) {
     return (
-      <div className="queue-empty">
-        <p>Your queue is empty.</p>
-        <p className="muted">Search for a song above to start listening.</p>
+      <div className="text-center py-16 border-2 border-dashed border-ink bg-paper">
+        <p className="font-display font-bold uppercase text-lg">Queue is empty</p>
+        <p className="text-smoke text-sm mt-1">Search for a song above to start.</p>
       </div>
     );
   }
@@ -24,7 +24,7 @@ export default function Queue() {
     <DragDropContext onDragEnd={onDragEnd}>
       <Droppable droppableId="queue">
         {(provided) => (
-          <div className="queue" ref={provided.innerRef} {...provided.droppableProps}>
+          <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col gap-2">
             {queue.map((track, i) => (
               <Draggable key={`${track.id}-${i}`} draggableId={`${track.id}-${i}`} index={i} isDragDisabled={isGuest}>
                 {(prov, snapshot) => (
@@ -33,22 +33,28 @@ export default function Queue() {
                     {...prov.draggableProps}
                     {...prov.dragHandleProps}
                     className={[
-                      'queue-item',
-                      i === currentIndex ? 'active' : '',
-                      snapshot.isDragging ? 'dragging' : '',
+                      'flex items-center gap-3 border-2 border-ink px-3 py-2.5 transition-colors',
+                      i === currentIndex ? 'bg-lime shadow-brut-sm' : 'bg-paper',
+                      snapshot.isDragging ? 'shadow-brut-lg' : '',
                     ].join(' ')}
                   >
-                    <img src={track.thumb} alt="" className="track-thumb" onClick={() => !isGuest && playIndex(i)} />
-                    <div className="track-info" onClick={() => !isGuest && playIndex(i)}>
-                      <div className="track-title">{track.title}</div>
-                      <div className="track-channel">{track.channel}</div>
+                    <img
+                      src={track.thumb} alt=""
+                      className="w-[72px] h-10 object-cover border-2 border-ink cursor-pointer"
+                      onClick={() => !isGuest && playIndex(i)}
+                    />
+                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => !isGuest && playIndex(i)}>
+                      <div className={`text-sm truncate ${i === currentIndex ? 'font-bold' : 'font-medium'}`}>
+                        {track.title}
+                      </div>
+                      <div className="text-xs text-smoke">{track.channel}</div>
                     </div>
-                    <span className="track-duration">{formatDuration(track.duration)}</span>
+                    <span className="text-xs text-smoke tabular-nums">{formatDuration(track.duration)}</span>
                     {!isGuest && (
                       <button
-                        className="delete-btn"
-                        aria-label={`Remove ${track.title} from queue`}
+                        aria-label={`Remove ${track.title}`}
                         onClick={(e) => { e.stopPropagation(); removeFromQueue(i); }}
+                        className="icon-square w-7 h-7 hover:bg-coral hover:text-paper"
                       >
                         ✕
                       </button>
